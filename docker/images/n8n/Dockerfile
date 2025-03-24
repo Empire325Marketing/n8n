@@ -1,8 +1,9 @@
 ARG NODE_VERSION=20
 FROM n8nio/base:${NODE_VERSION}
 
-ARG N8N_VERSION
-RUN if [ -z "$N8N_VERSION" ] ; then echo "The N8N_VERSION argument is missing!" ; exit 1; fi
+# Provide a default N8N_VERSION or allow it to be overridden
+ARG N8N_VERSION=latest
+RUN if [ "$N8N_VERSION" = "latest" ] ; then echo "Using latest N8N version" ; else echo "Using N8N version: $N8N_VERSION"; fi
 
 LABEL org.opencontainers.image.title="n8n"
 LABEL org.opencontainers.image.description="Workflow Automation Tool"
@@ -14,7 +15,11 @@ ENV N8N_VERSION=${N8N_VERSION}
 ENV NODE_ENV=production
 ENV N8N_RELEASE_TYPE=stable
 RUN set -eux; \
-	npm install -g --omit=dev n8n@${N8N_VERSION} --ignore-scripts && \
+	if [ "$N8N_VERSION" = "latest" ] ; then \
+		npm install -g --omit=dev n8n --ignore-scripts; \
+	else \
+		npm install -g --omit=dev n8n@${N8N_VERSION} --ignore-scripts; \
+	fi && \
 	npm rebuild --prefix=/usr/local/lib/node_modules/n8n sqlite3 && \
 	rm -rf /usr/local/lib/node_modules/n8n/node_modules/@n8n/chat && \
 	rm -rf /usr/local/lib/node_modules/n8n/node_modules/@n8n/design-system && \
